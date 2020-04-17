@@ -1,0 +1,78 @@
+
+Short explanations of any major technical decisions you made during the challenge
+
+
+Here are the classes and their purpose
+
+	- PlaylistDetailViewController: Basically the View whose single responsibility is rendering the  ViewModel provided by the Presenter
+
+	- PlaylistDetailPresenter: Contains the business logic and data transformation logic. This class demands to be thoroughly unit tested. 
+
+	It hands over external responsibility to others. For example it passes the network call responsibility to PlaylistDetailService.
+
+	The service classes are injected here so while writing tests the test doubles can be injected
+
+	- PlaylistDetailService: The sole purpose of this class is to perform network call
+
+	- TableViewCell: Is the cell. It has a ViewModel and as any other view when it gets the ViewModel it renders itself
+
+	- TableViewHeader: Is the header view. Also has a ViewMOdel which he renders itself
+
+	- The ViewModels are inside the classes because nested viewModels have namespacing
+
+
+Unit testing and Reusability
+
+The code is actually organized in a way so that it can have highest testability and reusability. 
+
+For example, the service class/struct can be reused by any other Presenters and highly reusable.
+
+Views are configured using a ViewModel because it's easier to write snapshot testing this way. For example -
+================================================
+	let view = View()
+	view.viewModel = ViewModel(param1: "", param2: "") // basically configure the view
+	SnapshotVerify(view)
+================================================
+
+
+Presenter have the service class injected so that while testing presenter we don't need to make actual network calls (Which might lead to flaky test behaviour) just inject mocks and see if the proper method in the service class is called or not. For example -
+
+======================================================
+	// Given 
+	let mockService = MockService()
+	let sut = Presenter(service: mockService)
+
+	// WHEN
+	sut.retrievePlayList()
+
+	// THAN
+	XCAssertTrue(mockService.isRetriveCalled)
+======================================================
+
+Other behavior of the presenters are also easily testable
+
+There is a viewInterface that is called to update the view which can be mocked to test appropriate ui integration after certain task is performed
+
+======================================================
+	// Given 
+	let sut = Presenter(service: dummyService)
+	sut.viewInterface = mockViewInterface
+
+	// WHEN
+	performtask() // Which after performing task update the UI by calling certain function in the ViewInterFace
+
+	// THAN
+	XCAssertTrue(mockViewInterface.isAppropriateFunctionCalledToUpdateUI)
+======================================================
+
+
+- Private functions are implementation details and while testing the public/internal functions they are automatically tested don't require explicit unit testing
+
+
+Service class(With real network cal) can be tested using expectations. But it might depend on business to business as business if we want to test to that way because it might lead to flaky behivour 
+
+
+The last part is UI testing which doesn't depend too much architecture but we need to decide how much is required
+
+
+
